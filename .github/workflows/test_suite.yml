@@ -6,8 +6,10 @@ name: Run Test Suite
 on:
   push:
     branches:
-      - master
+      - '**'  # Ensures the tests run on every push to any branch.
   pull_request:
+    branches:
+      - master  # Ensures tests run on pull requests to master.
 
 jobs:
   # Uses Python Framework build because on macos matplotlib requires it
