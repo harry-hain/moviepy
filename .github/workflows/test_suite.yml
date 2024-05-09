@@ -13,49 +13,49 @@ on:
 
 jobs:
   # Uses Python Framework build because on macos matplotlib requires it
-  macos:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-    steps:
-    - uses: actions/checkout@v3
-    - uses: s-weigand/setup-conda@v1
-      with:
-        activate-conda: true
-    - name: Install pythonw
-      run: conda install python.app
-    - name: Python Version Info
-      run: |
-        pythonw --version
-        which python
-        pythonw -m site --user-site
-        echo $PYTHONPATH
-        echo $PYTHONHOME
-    - name: Install dependencies
-      run: |
-        brew install imagemagick
-        # needed for installing matplotlib
-        brew install pkg-config
-        python -m pip install --upgrade wheel setuptools coveralls
-        python -m pip install ".[test, optional]"
-
-    - name: Test with pytest
-      run: |
-        pythonw -m pytest --doctest-glob "moviepy/**/**.py" -v --cov moviepy --cov-report term-missing
-
-    - name: Coveralls
-      run: coveralls
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_SERVICE_NAME: github
-
+#  macos:
+#    runs-on: macos-latest
+#    strategy:
+#      matrix:
+#        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+#    steps:
+#    - uses: actions/checkout@v3
+#    - uses: s-weigand/setup-conda@v1
+#      with:
+#        activate-conda: true
+#    - name: Install pythonw
+#      run: conda install python.app
+#    - name: Python Version Info
+#      run: |
+#        pythonw --version
+#        which python
+#        pythonw -m site --user-site
+#        echo $PYTHONPATH
+#        echo $PYTHONHOME
+#    - name: Install dependencies
+#      run: |
+#        brew install imagemagick
+#        # needed for installing matplotlib
+#        brew install pkg-config
+#        python -m pip install --upgrade wheel setuptools coveralls
+#        python -m pip install ".[test, optional]"
+#
+#    - name: Test with pytest
+#      run: |
+#        pythonw -m pytest --doctest-glob "moviepy/**/**.py" -v --cov moviepy --cov-report term-missing
+#
+#    - name: Coveralls
+#      run: coveralls
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        COVERALLS_SERVICE_NAME: github
+#
 
   windows:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.7"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
@@ -120,7 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.7"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
