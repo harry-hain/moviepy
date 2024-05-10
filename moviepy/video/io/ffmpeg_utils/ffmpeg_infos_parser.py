@@ -2,8 +2,6 @@ from moviepy import convert_to_seconds
 import re
 from moviepy.video.io.ffmpeg_utils.ffmpeg_parsing_utils.ffmpeg_stream_parsing import extract_stream_info, \
     extract_chapter_info
-from moviepy.video.io.ffmpeg_utils.ffmpeg_parsing_utils.ffmpeg_metadata_parsing import parse_metadata_field_value, \
-    video_metadata_type_casting
 from moviepy.video.io.ffmpeg_utils.ffmpeg_parsing_utils.ffmpeg_parsing_utilities import extract_start_time, \
     extract_bitrate, parse_fps, parse_tbr
 
