@@ -132,13 +132,11 @@ def test_write_videofiles_with_temp_audiofile_path(util):
         ),
     ),
 )
+
 def test_save_frame(util, with_mask, t, mask_color, frames):
     filename = os.path.join(util.TMP_DIR, "moviepy_VideoClip_save_frame.png")
     if os.path.isfile(filename):
-        try:
-            os.remove(filename)
-        except PermissionError:
-            pass
+        os.remove(filename)
 
     width, height = (len(frames[0][0]), len(frames[0]))
 
@@ -155,23 +153,19 @@ def test_save_frame(util, with_mask, t, mask_color, frames):
     e_r, e_g, e_b = BitmapClip.DEFAULT_COLOR_DICT[frames[t][0][0]]
 
     im = Image.open(filename, mode="r")
-    assert im.width == width
-    assert im.height == height
+    assert im.width == width and im.height == height
 
     for i in range(im.width):
         for j in range(im.height):
             rgba = im.getpixel((i, j))
-            if len(rgba) == 4:
+            if len(rgba) == 4:  # Check if the image has an alpha channel
                 r, g, b, a = rgba
+                assert r == e_r and g == e_g and b == e_b
+                if with_mask:
+                    assert round(a / 255, 2) == mask_color
             else:
                 r, g, b = rgba
-
-            assert r == e_r
-            assert g == e_g
-            assert b == e_b
-
-            if with_mask:
-                assert round(a / 254, 2) == mask_color
+                assert r == e_r and g == e_g and b == e_b
 
 
 def test_write_image_sequence(util, video):
