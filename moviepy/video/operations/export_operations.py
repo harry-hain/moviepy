@@ -15,6 +15,7 @@ from moviepy.tools import (
 )
 import proglog
 import os
+import copy as _copy
 
 class ExportOperations:
     def __init__(self, clip):
@@ -108,3 +109,6 @@ class ExportOperations:
         else:
             write_gif(self.clip, filename, fps, program, opt, fuzz, loop, dispose, colors, logger, pixel_format)
 
+    def __deepcopy__(self, memo):
+        # Return self to ensure all copies of the clip share the same ExportOperations instance
+        return self
