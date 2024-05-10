@@ -139,9 +139,6 @@ def write_gif_with_tempfiles(
         )
 
     elif program == "ffmpeg":
-        if loop:
-            clip = loop_fx(clip, n=loop)
-
         if not pixel_format:
             pixel_format = "rgba" if with_mask else "rgb24"
 
