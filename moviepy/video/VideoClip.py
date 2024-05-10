@@ -95,7 +95,7 @@ class VideoClip(Clip):
     """
 
     def __init__(
-        self, make_frame=None, is_mask=False, duration=None, has_constant_size=True
+            self, make_frame=None, is_mask=False, duration=None, has_constant_size=True
     ):
         super().__init__()
         self.mask = None
@@ -198,26 +198,26 @@ class VideoClip(Clip):
     @convert_masks_to_RGB
     @convert_path_to_string(["filename", "temp_audiofile", "temp_audiofile_path"])
     def write_videofile(
-        self,
-        filename,
-        fps=None,
-        codec=None,
-        bitrate=None,
-        audio=True,
-        audio_fps=44100,
-        preset="medium",
-        audio_nbytes=4,
-        audio_codec=None,
-        audio_bitrate=None,
-        audio_bufsize=2000,
-        temp_audiofile=None,
-        temp_audiofile_path="",
-        remove_temp=True,
-        write_logfile=False,
-        threads=None,
-        ffmpeg_params=None,
-        logger="bar",
-        pixel_format=None,
+            self,
+            filename,
+            fps=None,
+            codec=None,
+            bitrate=None,
+            audio=True,
+            audio_fps=44100,
+            preset="medium",
+            audio_nbytes=4,
+            audio_codec=None,
+            audio_bitrate=None,
+            audio_bufsize=2000,
+            temp_audiofile=None,
+            temp_audiofile_path="",
+            remove_temp=True,
+            write_logfile=False,
+            threads=None,
+            ffmpeg_params=None,
+            logger="bar",
+            pixel_format=None,
     ):
         """Write the clip to a videofile.
 
@@ -349,7 +349,7 @@ class VideoClip(Clip):
 
         audiofile = audio if isinstance(audio, str) else None
         make_audio = (
-            (audiofile is None) and (audio is True) and (self.audio is not None)
+                (audiofile is None) and (audio is True) and (self.audio is not None)
         )
 
         if make_audio and temp_audiofile:
@@ -401,7 +401,7 @@ class VideoClip(Clip):
     @use_clip_fps_by_default
     @convert_masks_to_RGB
     def write_images_sequence(
-        self, name_format, fps=None, with_mask=True, logger="bar"
+            self, name_format, fps=None, with_mask=True, logger="bar"
     ):
         """Writes the videoclip to a sequence of image files.
 
@@ -458,18 +458,18 @@ class VideoClip(Clip):
     @convert_masks_to_RGB
     @convert_path_to_string("filename")
     def write_gif(
-        self,
-        filename,
-        fps=None,
-        program="imageio",
-        opt="nq",
-        fuzz=1,
-        loop=0,
-        dispose=False,
-        colors=None,
-        tempfiles=False,
-        logger="bar",
-        pixel_format=None,
+            self,
+            filename,
+            fps=None,
+            program="imageio",
+            opt="nq",
+            fuzz=1,
+            loop=0,
+            dispose=False,
+            colors=None,
+            tempfiles=False,
+            logger="bar",
+            pixel_format=None,
     ):
         """Write the VideoClip to a GIF file.
 
@@ -593,11 +593,22 @@ class VideoClip(Clip):
         >>> new_clip = clip.subapply(lambda c:c.multiply_speed(0.5) , 3,6)
 
         """
-        left = None if (start_time == 0) else self.subclip(0, start_time)
-        center = self.subclip(start_time, end_time).fx(fx, **kwargs)
-        right = None if (end_time is None) else self.subclip(start_time=end_time)
+        if start_time == 0:
+            left = None
+        else:
+            left = self.subclip(0, start_time)
 
-        clips = [clip for clip in [left, center, right] if clip is not None]
+        center = self.subclip(start_time, end_time).fx(fx, **kwargs)
+
+        if end_time is None:
+            right = None
+        else:
+            right = self.subclip(start_time=end_time)
+
+        clips = []
+        for clip in [left, center, right]:
+            if clip is not None:
+                clips.append(clip)
 
         # beurk, have to find other solution
         from moviepy.video.compositing.concatenate import concatenate_videoclips
@@ -764,9 +775,9 @@ class VideoClip(Clip):
             )
 
         if (
-            isinstance(self, ImageClip)
-            and (not hasattr(pos, "__call__"))
-            and ((self.mask is None) or isinstance(self.mask, ImageClip))
+                isinstance(self, ImageClip)
+                and (not hasattr(pos, "__call__"))
+                and ((self.mask is None) or isinstance(self.mask, ImageClip))
         ):
             new_result = result.to_ImageClip()
             if result.mask is not None:
@@ -1075,7 +1086,7 @@ class ImageClip(VideoClip):
     """
 
     def __init__(
-        self, img, is_mask=False, transparent=True, fromalpha=False, duration=None
+            self, img, is_mask=False, transparent=True, fromalpha=False, duration=None
     ):
         VideoClip.__init__(self, is_mask=is_mask, duration=duration)
 
@@ -1267,25 +1278,25 @@ class TextClip(ImageClip):
 
     @convert_path_to_string("filename")
     def __init__(
-        self,
-        text=None,
-        filename=None,
-        size=None,
-        color="black",
-        bg_color="transparent",
-        font_size=None,
-        font="Courier",
-        stroke_color=None,
-        stroke_width=1,
-        method="label",
-        kerning=None,
-        align="center",
-        interline=None,
-        tempfilename=None,
-        temptxt=None,
-        transparent=True,
-        remove_temp=True,
-        print_cmd=False,
+            self,
+            text=None,
+            filename=None,
+            size=None,
+            color="black",
+            bg_color="transparent",
+            font_size=None,
+            font="Courier",
+            stroke_color=None,
+            stroke_width=1,
+            method="label",
+            kerning=None,
+            align="center",
+            interline=None,
+            tempfilename=None,
+            temptxt=None,
+            transparent=True,
+            remove_temp=True,
+            print_cmd=False,
     ):
         if text is not None:
             if temptxt is None:
@@ -1428,7 +1439,7 @@ class BitmapClip(VideoClip):
 
     @convert_parameter_to_seconds(["duration"])
     def __init__(
-        self, bitmap_frames, *, fps=None, duration=None, color_dict=None, is_mask=False
+            self, bitmap_frames, *, fps=None, duration=None, color_dict=None, is_mask=False
     ):
         """Creates a VideoClip object from a bitmap representation. Primarily used
         in the test suite.
