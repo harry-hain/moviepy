@@ -99,7 +99,7 @@ class BitmapClip(VideoClip):
         )
         self.fps = fps
 
-    def to_bitmap(self, color_dict=None):
+    def to_bitmap(self, letter_RGB_dict=None):
         """Returns a valid bitmap list that represents each frame of the clip.
         If `color_dict` is not specified, then it will use the same `color_dict`
         that was used to create the clip.
