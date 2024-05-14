@@ -1,5 +1,5 @@
 import numpy as np
-from moviepy.video.VideoClip import ImageClip, VideoClip
+from moviepy.video.sub_clips.image_clip import ImageClip
 from moviepy.decorators import convert_parameter_to_seconds
 
 class ConversionOperations:
