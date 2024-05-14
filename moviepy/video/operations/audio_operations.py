@@ -27,8 +27,10 @@ class AudioOperations:
 
     def __add__(self, other):
         if isinstance(other, VideoClip):
-            method = "chain" if self.video_clip.size == other.size else "compose"
-            return concatenate_videoclips([self.video_clip, other], method=method)
+            is_clips_same_size = self.video_clip.size == other.size
+            method = "chain" if is_clips_same_size else "compose"
+            clips_list = [self.video_clip, other]
+            return concatenate_videoclips(clips_list, method=method)
         return NotImplemented
 
     def __or__(self, other):
