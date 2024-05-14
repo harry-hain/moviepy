@@ -20,12 +20,28 @@ class FilterOperations:
         >>> new_clip = clip.subapply(lambda c:c.multiply_speed(0.5) , 3,6)
 
         """
-        left = None if (start_time == 0) else self.video_clip.subclip(0, start_time)
-        center = self.video_clip.subclip(start_time, end_time).fx(fx, **kwargs)
-        right = None if (end_time is None) else self.video_clip.subclip(start_time=end_time)
+        # Left channel
+        if start_time == 0:
+            left = None
+        else:
+            left = self.subclip(0, start_time)
 
-        clips = [clip for clip in [left, center, right] if clip is not None]
-        return concatenate_videoclips(clips).with_start(self.video_clip.start)
+        # Center channel
+        center = self.subclip(start_time, end_time).fx(fx, **kwargs)
+
+        # Right channel
+        if end_time is None:
+            right = None
+        else:
+            right = self.subclip(start_time=end_time)
+
+        # Setup clips
+        clips = []
+        for clip in [left, center, right]:
+            if clip is not None:
+                clips.append(clip)
+
+        return concatenate_videoclips(clips).with_start(self.start)
 
     def image_transform(self, image_func, apply_to=None):
         """Modifies the images of a clip by replacing the frame `get_frame(t)` by
