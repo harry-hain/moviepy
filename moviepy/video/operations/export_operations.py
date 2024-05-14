@@ -161,7 +161,11 @@ class ExportOperations:
             codec = extensions_dict[ext]["codec"][0]
 
         audiofile = audio if isinstance(audio, str) else None
-        make_audio = ((audiofile is None) and (audio is True) and (self.video_clip.audio is not None))
+
+        is_no_audiofile = audiofile is None
+        does_clip_contain_audio = audio is True
+        is_clip_audio_present = self.video_clip.audio is not None
+        make_audio = (is_no_audiofile and does_clip_contain_audio and is_clip_audio_present)
 
         if make_audio:
             audiofile = temp_audiofile or os.path.join(temp_audiofile_path,
