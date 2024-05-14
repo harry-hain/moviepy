@@ -4,6 +4,7 @@ from moviepy.video.VideoClip import ColorClip, ImageClip, VideoClip
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.tools.drawing import blit
 
+
 class CompositingOperations:
     def __init__(self, video_clip):
         self.video_clip = video_clip
@@ -15,7 +16,11 @@ class CompositingOperations:
         """
         frame = self.video_clip.get_frame(t).astype("uint8")
         pos = self.video_clip.pos(t)
-        return blit(frame, picture, pos, mask=self.video_clip.mask.get_frame(t) if self.video_clip.mask else None)
+
+        frame_at_t = self.video_clip.mask.get_frame(t)
+        current_mask = self.video_clip.mask
+        new_mask = frame_at_t if current_mask else None
+        return blit(frame, picture, pos, mask=new_mask)
 
     def add_mask(self):
         """Add a mask VideoClip to the VideoClip.
@@ -33,7 +38,9 @@ class CompositingOperations:
         else:
             def make_frame(t):
                 return np.ones(self.video_clip.get_frame(t).shape[:2], dtype=float)
-            self.video_clip.mask = VideoClip(is_mask=True, make_frame=make_frame).with_duration(self.video_clip.duration)
+
+            self.video_clip.mask = VideoClip(is_mask=True, make_frame=make_frame).with_duration(
+                self.video_clip.duration)
 
     def on_color(self, size=None, color=(0, 0, 0), pos=None, col_opacity=None):
         """Place the clip on a colored background.
@@ -86,8 +93,8 @@ class CompositingOperations:
         horizontal_start = (new_shape[1] - current_shape[1]) // 2
 
         padded_array[
-            vertical_start:vertical_start + current_shape[0],
-            horizontal_start:horizontal_start + current_shape[1]
+        vertical_start:vertical_start + current_shape[0],
+        horizontal_start:horizontal_start + current_shape[1]
         ] = pre_array
 
         # If the requested shape is smaller than the current shape, slice the padded array
