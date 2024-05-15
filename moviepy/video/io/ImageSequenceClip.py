@@ -56,9 +56,6 @@ class ImageSequenceClip(VideoClip):
         VideoClip.__init__(self, is_mask=is_mask)
 
         # Parse the data
-
-        fromfiles = True
-
         if isinstance(sequence, list):
             if isinstance(sequence[0], str):
                 if load_images:
