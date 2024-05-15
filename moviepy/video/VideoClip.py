@@ -392,9 +392,8 @@ class VideoClip(Clip):
             pixel_format=pixel_format,
         )
 
-        if remove_temp and make_audio:
-            if os.path.exists(audiofile):
-                os.remove(audiofile)
+        if remove_temp and make_audio and os.path.exists(audiofile):
+            os.remove(audiofile)
         logger(message="MoviePy - video ready %s" % filename)
 
     @requires_duration
