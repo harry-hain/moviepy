@@ -1508,22 +1508,27 @@ class BitmapClip(VideoClip):
         )
         self.fps = fps
 
-    def to_bitmap(self, color_dict=None):
-        """Returns a valid bitmap list that represents each frame of the clip.
-        If `color_dict` is not specified, then it will use the same `color_dict`
-        that was used to create the clip.
-        """
-        color_dict = color_dict or self.color_dict
+        def to_bitmap(self, letter_RGB_dict=None):
+            """Returns a valid bitmap list that represents each frame of the clip.
+            If `color_dict` is not specified, then it will use the same `color_dict`
+            that was used to create the clip.
+            """
+            letter_RGB_dict = letter_RGB_dict or self.color_dict
 
-        bitmap = []
-        for frame in self.iter_frames():
-            bitmap.append([])
-            for line in frame:
-                bitmap[-1].append("")
-                for pixel in line:
-                    letter = list(color_dict.keys())[
-                        list(color_dict.values()).index(tuple(pixel))
-                    ]
-                    bitmap[-1][-1] += letter
+            bitmap = []
+            for frame in self.iter_frames():
+                bitmap.append([])
+                for line in frame:
+                    bitmap[-1].append("")
+                    for pixel_RGB in line:
+                        color_letter = get_letter(letter_RGB_dict, pixel_RGB)
+                        bitmap[-1][-1] += color_letter
+            return bitmap
 
-        return bitmap
+    def get_letter(color_dict, pixel_RGB):
+        pixel_RGB = tuple(pixel_RGB)
+        color_letters = color_dict.keys()
+        letter_RGBs = color_dict.values()
+
+        color_letter = list(color_letters)[list(letter_RGBs).index(pixel_RGB)]
+        return color_letter
