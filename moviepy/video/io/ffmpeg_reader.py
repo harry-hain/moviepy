@@ -1,10 +1,8 @@
 """Implements all the functions to read a video or a picture using ffmpeg."""
-import os
 import subprocess as sp
 
 from moviepy.config import FFMPEG_BINARY  # ffmpeg, ffmpeg.exe, etc...
 from moviepy.tools import cross_platform_popen_params
-from moviepy.video.io.ffmpeg_reader_utils.ffmpeg_infos_parser import FFmpegInfosParser
 from moviepy.video.io.ffmpeg_reader_utils.ffmpeg_reader_initialiser import FFMPEG_VideoReaderInitialiser
 
 
