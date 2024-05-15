@@ -61,7 +61,6 @@ def concatenate_videoclips(
     if transition is not None:
         clip_transition_pairs = [[v, transition] for v in clips[:-1]]
         clips = reduce(lambda x, y: x + y, clip_transition_pairs) + [clips[-1]]
-        transition = None
 
     timings = np.cumsum([0] + [clip.duration for clip in clips])
 
