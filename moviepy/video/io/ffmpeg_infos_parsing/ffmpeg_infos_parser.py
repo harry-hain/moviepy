@@ -3,34 +3,7 @@ import warnings
 from moviepy.video.io.ffmpeg_infos_parsing.parsing_state import ParsingState
 from moviepy.video.io.ffmpeg_infos_parsing.file_metadata import FileMetadata
 
-
 class FFmpegInfosParser:
-    """Finite state ffmpeg `-i` command option file information parser.
-    Is designed to parse the output fast, in one loop. Iterates line by
-    line of the `ffmpeg -i <filename> [-f null -]` command output changing
-    the internal state of the parser.
-
-    Parameters
-    ----------
-
-    filename
-      Name of the file parsed, only used to raise accurate error messages.
-
-    infos
-      Information returned by FFmpeg.
-
-    fps_source
-      Indicates what source data will be preferably used to retrieve fps data.
-
-    check_duration
-      Enable or disable the parsing of the duration of the file. Useful to
-      skip the duration check, for example, for images.
-
-    decode_file
-      Indicates if the whole file has been decoded. The duration parsing strategy
-      will differ depending on this argument.
-    """
-
     def __init__(
             self,
             infos,
@@ -49,10 +22,6 @@ class FFmpegInfosParser:
         self.file_metadata = FileMetadata()
 
     def parse(self):
-        """Parses the information returned by FFmpeg in stderr executing their binary
-        for a file with ``-i`` option and returns a dictionary with all data needed
-        by MoviePy.
-        """
         input_chapters = []
 
         for line in self.infos.splitlines()[1:]:
@@ -134,13 +103,13 @@ class FFmpegInfosParser:
                     self.parsing_state._current_chapter = None
 
                 if "input_number" not in self.parsing_state._current_input_file:
-                    self.parsing_state._current_input_file["input_number"] = input_number
+                    self.parsing_state._current_input_file = {"input_number": input_number, "streams": []}
                 elif self.parsing_state._current_input_file["input_number"] != input_number:
                     if len(input_chapters) >= input_number + 1:
                         self.parsing_state._current_input_file["chapters"] = input_chapters[input_number]
 
                     self.file_metadata.result["inputs"].append(self.parsing_state._current_input_file)
-                    self.parsing_state._current_input_file = {"input_number": input_number}
+                    self.parsing_state._current_input_file = {"input_number": input_number, "streams": []}
 
                 try:
                     global_data, stream_data = self.parse_data_by_stream_type(
