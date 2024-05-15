@@ -1525,10 +1525,10 @@ class BitmapClip(VideoClip):
                         bitmap[-1][-1] += color_letter
             return bitmap
 
-    def get_letter(color_dict, pixel_RGB):
-        pixel_RGB = tuple(pixel_RGB)
-        color_letters = color_dict.keys()
-        letter_RGBs = color_dict.values()
+def get_letter(color_dict, pixel_RGB):
+    pixel_RGB = tuple(pixel_RGB)
+    color_letters = color_dict.keys()
+    letter_RGBs = color_dict.values()
 
-        color_letter = list(color_letters)[list(letter_RGBs).index(pixel_RGB)]
-        return color_letter
+    color_letter = list(color_letters)[list(letter_RGBs).index(pixel_RGB)]
+    return color_letter
