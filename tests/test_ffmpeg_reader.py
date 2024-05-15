@@ -13,34 +13,34 @@ from moviepy.config import FFMPEG_BINARY
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 from moviepy.video.io.ffmpeg_reader import (
     FFMPEG_VideoReader,
-    FFmpegInfosParser,
-    ffmpeg_parse_infos,
+    FFmpegInfosParser
 )
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.VideoClip import BitmapClip, ColorClip
+from moviepy.video.io.ffmpeg_reader_utils.file_info import FileInfo
 
 
 def test_ffmpeg_parse_infos():
-    d = ffmpeg_parse_infos("media/big_buck_bunny_432_433.webm")
+    d = FileInfo.ffmpeg_parse_infos("media/big_buck_bunny_432_433.webm")
     assert d["duration"] == 1.0
     assert d["audio_fps"] == 44100
 
-    d = ffmpeg_parse_infos("media/pigs_in_a_polka.gif")
+    d = FileInfo.ffmpeg_parse_infos("media/pigs_in_a_polka.gif")
     assert d["video_size"] == [314, 273]
     assert d["duration"] == 3.0
     assert not d["audio_found"]
 
-    d = ffmpeg_parse_infos("media/video_with_failing_audio.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/video_with_failing_audio.mp4")
     assert d["audio_found"]
     assert d["audio_fps"] == 44100
     assert d["audio_bitrate"] == 127
 
-    d = ffmpeg_parse_infos("media/crunching.mp3")
+    d = FileInfo.ffmpeg_parse_infos("media/crunching.mp3")
     assert d["audio_found"]
     assert d["audio_fps"] == 48000
     assert d["metadata"]["artist"] == "SoundJay.com Sound Effects"
 
-    d = ffmpeg_parse_infos("media/sintel_with_14_chapters.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/sintel_with_14_chapters.mp4")
     assert d["audio_found"]
     assert d["video_found"]
     assert d["audio_bitrate"]
@@ -48,10 +48,10 @@ def test_ffmpeg_parse_infos():
 
 
 def test_ffmpeg_parse_infos_video_nframes():
-    d = ffmpeg_parse_infos("media/big_buck_bunny_0_30.webm")
+    d = FileInfo.ffmpeg_parse_infos("media/big_buck_bunny_0_30.webm")
     assert d["video_n_frames"] == 720
 
-    d = ffmpeg_parse_infos("media/bitmap.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/bitmap.mp4")
     assert d["video_n_frames"] == 5
 
 
@@ -68,7 +68,7 @@ def test_ffmpeg_parse_infos_video_nframes():
 )
 def test_ffmpeg_parse_infos_decode_file(decode_file, expected_duration):
     """Test `decode_file` argument of `ffmpeg_parse_infos` function."""
-    d = ffmpeg_parse_infos("media/big_buck_bunny_0_30.webm", decode_file=decode_file)
+    d = FileInfo.ffmpeg_parse_infos("media/big_buck_bunny_0_30.webm", decode_file=decode_file)
     assert d["duration"] == expected_duration
 
     # check metadata is fine
@@ -130,7 +130,7 @@ def test_ffmpeg_parse_infos_multiple_audio_streams(util, mono_wave):
         subprocess.check_call(cmd, stderr=stderr)
 
     # check that `ffmpeg_parse_infos` can parse all the streams data
-    d = ffmpeg_parse_infos(multiple_streams_filepath)
+    d = FileInfo.ffmpeg_parse_infos(multiple_streams_filepath)
 
     # number of inputs and streams
     assert len(d["inputs"]) == 1
@@ -210,7 +210,7 @@ def test_ffmpeg_parse_infos_metadata(util, mono_wave):
     videoclip.write_videofile(filepath, codec="libx264", ffmpeg_params=ffmpeg_params)
 
     # get information about created file
-    d = ffmpeg_parse_infos(filepath)
+    d = FileInfo.ffmpeg_parse_infos(filepath)
 
     def get_value_from_dict_using_lower_key(field, dictionary):
         """Obtains a value from a dictionary using a key, no matter if the key
@@ -248,7 +248,7 @@ def test_ffmpeg_parse_infos_metadata(util, mono_wave):
 
 def test_ffmpeg_parse_infos_chapters():
     """Check that `ffmpeg_parse_infos` can parse chapters with their metadata."""
-    d = ffmpeg_parse_infos("media/sintel_with_14_chapters.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/sintel_with_14_chapters.mp4")
 
     chapters = d["inputs"][0]["chapters"]
 
@@ -269,7 +269,7 @@ def test_ffmpeg_parse_infos_metadata_with_attached_pic():
     Currently, does not distinguish if the video found is an attached picture,
     this test serves mainly to ensure that #1487 issue does not happen again:
     """
-    d = ffmpeg_parse_infos("media/with-attached-pic.mp3")
+    d = FileInfo.ffmpeg_parse_infos("media/with-attached-pic.mp3")
 
     assert d["audio_bitrate"] == 320
     assert d["audio_found"]
@@ -285,7 +285,7 @@ def test_ffmpeg_parse_infos_metadata_with_attached_pic():
 
 
 def test_ffmpeg_parse_video_rotation():
-    d = ffmpeg_parse_infos("media/rotated-90-degrees.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/rotated-90-degrees.mp4")
     assert d["video_rotation"] == 90
     assert d["video_size"] == [1920, 1080]
 
@@ -300,7 +300,7 @@ def test_correct_video_rotation(util):
     )
     clip.write_videofile(corrected_rotation_filename)
 
-    d = ffmpeg_parse_infos(corrected_rotation_filename)
+    d = FileInfo.ffmpeg_parse_infos(corrected_rotation_filename)
     assert "video_rotation" not in d
     assert d["video_size"] == [1080, 1920]
 

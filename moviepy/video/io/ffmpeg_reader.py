@@ -5,63 +5,36 @@ import subprocess as sp
 from moviepy.config import FFMPEG_BINARY  # ffmpeg, ffmpeg.exe, etc...
 from moviepy.tools import cross_platform_popen_params
 from moviepy.video.io.ffmpeg_reader_utils.ffmpeg_infos_parser import FFmpegInfosParser
-from moviepy.video.io.ffmpeg_reader_utils.file_info import FileInfo
-from moviepy.video.io.ffmpeg_reader_utils.video_properties import VideoProperties
-from moviepy.video.io.ffmpeg_reader_utils.processing_state import ProcessingState
+from moviepy.video.io.ffmpeg_reader_utils.ffmpeg_reader_initialiser import FFMPEG_VideoReaderInitialiser
 
 
 class FFMPEG_VideoReader:
     """Class for video byte-level reading with ffmpeg."""
 
     def __init__(
-        self,
-        filename,
-        decode_file=True,
-        print_infos=False,
-        bufsize=None,
-        pixel_format="rgb24",
-        check_duration=True,
-        target_resolution=None,
-        resize_algo="bicubic",
-        fps_source="fps",
-    ):
-        infos = FileInfo.ffmpeg_parse_infos(
+            self,
             filename,
-            check_duration=check_duration,
-            fps_source=fps_source,
-            decode_file=decode_file,
-            print_infos=print_infos,
+            decode_file=True,
+            print_infos=False,
+            bufsize=None,
+            pixel_format="rgb24",
+            check_duration=True,
+            target_resolution=None,
+            resize_algo="bicubic",
+            fps_source="fps",
+    ):
+        initializer = FFMPEG_VideoReaderInitialiser(
+            filename,
+            decode_file,
+            print_infos,
+            bufsize,
+            pixel_format,
+            check_duration,
+            target_resolution,
+            resize_algo,
+            fps_source,
         )
-
-        # Initialize FileInfo container
-        self.file_info = FileInfo(
-            filename=filename,
-            infos=infos,
-            duration=infos["video_duration"],
-            ffmpeg_duration=infos["duration"],
-            n_frames=infos["video_n_frames"],
-            bitrate=infos["video_bitrate"]
-        )
-
-        # Initialize VideoProperties container
-        size = infos["video_size"]
-        rotation = abs(infos.get("video_rotation", 0))
-
-        self.video_properties = VideoProperties(
-            fps=infos["video_fps"],
-            size=size,
-            rotation=rotation,
-            target_resolution=target_resolution,
-            resize_algo=resize_algo,
-            pixel_format=pixel_format,
-            depth=None,
-            bufsize=bufsize
-        )
-        self.video_properties.initialize()
-
-        # Initialize ProcessingState container
-        self.processing_state = ProcessingState()
-
+        self.file_info, self.video_properties, self.processing_state = initializer.initialize()
         self.initialize()
 
     def initialize(self, start_time=0):
@@ -82,23 +55,23 @@ class FFMPEG_VideoReader:
             i_arg = ["-i", self.file_info.filename]
 
         cmd = (
-            [FFMPEG_BINARY]
-            + i_arg
-            + [
-                "-loglevel",
-                "error",
-                "-f",
-                "image2pipe",
-                "-vf",
-                "scale=%d:%d" % tuple(self.video_properties.size),
-                "-sws_flags",
-                self.video_properties.resize_algo,
-                "-pix_fmt",
-                self.video_properties.pixel_format,
-                "-vcodec",
-                "rawvideo",
-                "-",
-            ]
+                [FFMPEG_BINARY]
+                + i_arg
+                + [
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "image2pipe",
+                    "-vf",
+                    "scale=%d:%d" % tuple(self.video_properties.size),
+                    "-sws_flags",
+                    self.video_properties.resize_algo,
+                    "-pix_fmt",
+                    self.video_properties.pixel_format,
+                    "-vcodec",
+                    "rawvideo",
+                    "-",
+                ]
         )
         popen_params = cross_platform_popen_params(
             {
@@ -162,8 +135,6 @@ class FFMPEG_VideoReader:
         self.close()
 
 
-
-
 def ffmpeg_read_image(filename, with_mask=True, pixel_format=None):
     """Read an image file (PNG, BMP, JPEG...).
 
@@ -175,7 +146,6 @@ def ffmpeg_read_image(filename, with_mask=True, pixel_format=None):
 
     Parameters
     ----------
-
     filename
       Name of the image file. Can be of any format supported by ffmpeg.
 
@@ -187,7 +157,6 @@ def ffmpeg_read_image(filename, with_mask=True, pixel_format=None):
       Optional: Pixel format for the image to read. If is not specified
       'rgb24' will be used as the default format unless ``with_mask`` is set
       as ``True``, then 'rgba' will be used.
-
     """
     if not pixel_format:
         pixel_format = "rgba" if with_mask else "rgb24"
@@ -197,93 +166,3 @@ def ffmpeg_read_image(filename, with_mask=True, pixel_format=None):
     im = reader.processing_state.last_read
     del reader
     return im
-
-
-def ffmpeg_parse_infos(
-        filename,
-        check_duration=True,
-        fps_source="fps",
-        decode_file=False,
-        print_infos=False,
-):
-    """Get the information of a file using ffmpeg.
-
-    Returns a dictionary with next fields:
-
-    - ``"duration"``
-    - ``"metadata"``
-    - ``"inputs"``
-    - ``"video_found"``
-    - ``"video_fps"``
-    - ``"video_n_frames"``
-    - ``"video_duration"``
-    - ``"video_bitrate"``
-    - ``"video_metadata"``
-    - ``"audio_found"``
-    - ``"audio_fps"``
-    - ``"audio_bitrate"``
-    - ``"audio_metadata"``
-
-    Note that "video_duration" is slightly smaller than "duration" to avoid
-    fetching the incomplete frames at the end, which raises an error.
-
-    Parameters
-    ----------
-
-    filename
-      Name of the file parsed, only used to raise accurate error messages.
-
-    infos
-      Information returned by FFmpeg.
-
-    fps_source
-      Indicates what source data will be preferably used to retrieve fps data.
-
-    check_duration
-      Enable or disable the parsing of the duration of the file. Useful to
-      skip the duration check, for example, for images.
-
-    decode_file
-      Indicates if the whole file must be read to retrieve their duration.
-      This is needed for some files in order to get the correct duration (see
-      https://github.com/Zulko/moviepy/pull/1222).
-    """
-    # Open the file in a pipe, read output
-    cmd = [FFMPEG_BINARY, "-hide_banner", "-i", filename]
-    if decode_file:
-        cmd.extend(["-f", "null", "-"])
-
-    popen_params = cross_platform_popen_params(
-        {
-            "bufsize": 10 ** 5,
-            "stdout": sp.PIPE,
-            "stderr": sp.PIPE,
-            "stdin": sp.DEVNULL,
-        }
-    )
-
-    proc = sp.Popen(cmd, **popen_params)
-    (output, error) = proc.communicate()
-    infos = error.decode("utf8", errors="ignore")
-
-    proc.terminate()
-    del proc
-
-    if print_infos:
-        # print the whole info text returned by FFMPEG
-        print(infos)
-
-    try:
-        return FFmpegInfosParser(
-            infos,
-            filename,
-            fps_source=fps_source,
-            check_duration=check_duration,
-            decode_file=decode_file,
-        ).parse()
-    except Exception as exc:
-        if os.path.isdir(filename):
-            raise IsADirectoryError(f"'{filename}' is a directory")
-        elif not os.path.exists(filename):
-            raise FileNotFoundError(f"'{filename}' not found")
-        raise IOError(f"Error passing `ffmpeg -i` command output:\n\n{infos}") from exc
