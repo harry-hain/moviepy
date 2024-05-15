@@ -12,12 +12,13 @@ from moviepy.audio.AudioClip import AudioClip
 from moviepy.config import FFMPEG_BINARY
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 from moviepy.video.io.ffmpeg_reader import (
-    FFMPEG_VideoReader,
-    FFmpegInfosParser
+    FFMPEG_VideoReader
 )
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.VideoClip import BitmapClip, ColorClip
 from moviepy.video.io.ffmpeg_reader_utils.file_info import FileInfo
+from moviepy.video.io.ffmpeg_reader_utils.ffmpeg_infos_parser import FFmpegInfosParser
+
 
 
 def test_ffmpeg_parse_infos():
