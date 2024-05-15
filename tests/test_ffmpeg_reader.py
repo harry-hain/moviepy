@@ -20,7 +20,6 @@ from moviepy.video.io.ffmpeg_reader_utils.file_info import FileInfo
 from moviepy.video.io.ffmpeg_reader_utils.ffmpeg_infos_parser import FFmpegInfosParser
 
 
-
 def test_ffmpeg_parse_infos():
     d = FileInfo.ffmpeg_parse_infos("media/big_buck_bunny_432_433.webm")
     assert d["duration"] == 1.0
@@ -59,12 +58,12 @@ def test_ffmpeg_parse_infos_video_nframes():
 @pytest.mark.parametrize(
     ("decode_file", "expected_duration"),
     (
-        (False, 30),
-        (True, 30.02),
+            (False, 30),
+            (True, 30.02),
     ),
     ids=(
-        "decode_file=False",
-        "decode_file=True",
+            "decode_file=False",
+            "decode_file=True",
     ),
 )
 def test_ffmpeg_parse_infos_decode_file(decode_file, expected_duration):
@@ -237,7 +236,7 @@ def test_ffmpeg_parse_infos_metadata(util, mono_wave):
     for stream_type, stream in streams.items():
         for field, value in metadata[stream_type].items():
             assert (
-                get_value_from_dict_using_lower_key(field, stream["metadata"]) == value
+                    get_value_from_dict_using_lower_key(field, stream["metadata"]) == value
             )
 
     # assert stream languages
@@ -652,7 +651,7 @@ def test_large_small_skip_equal():
     large_skip_final_frame = large_skip_reader.get_frame(10)
 
     assert (
-        sequential_reader.processing_state.pos == small_skip_reader.processing_state.pos == large_skip_reader.processing_state.pos == 241
+            sequential_reader.processing_state.pos == small_skip_reader.processing_state.pos == large_skip_reader.processing_state.pos == 241
     )
 
     # All frames have gone forward an equal amount, so should be equal
