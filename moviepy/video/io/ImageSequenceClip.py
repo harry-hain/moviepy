@@ -90,7 +90,7 @@ class ImageSequenceClip(VideoClip):
 
         self.fps = fps
         if fps is not None:
-            durations = [1.0 / fps for image in sequence]
+            durations = [1.0 / fps for _ in sequence]
             self.images_starts = [
                 1.0 * i / fps - np.finfo(np.float32).eps for i in range(len(sequence))
             ]
