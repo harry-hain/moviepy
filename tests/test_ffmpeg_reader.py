@@ -565,75 +565,76 @@ def test_sequential_frame_pos():
     The rgb values are not pure due to compression.
     """
     reader = FFMPEG_VideoReader("media/test_video.mp4")
-    assert reader.pos == 1
+    assert reader.processing_state.pos == 1
 
     # Get first frame
     frame_1 = reader.get_frame(0)
-    assert reader.pos == 1
+    assert reader.processing_state.pos == 1
     assert np.array_equal(frame_1, [[[254, 0, 0]]])
 
     # Get a specific sequential frame
     frame_2 = reader.get_frame(1)
-    assert reader.pos == 2
+    assert reader.processing_state.pos == 2
     assert np.array_equal(frame_2, [[[0, 255, 1]]])
 
     # Get next frame. Note `.read_frame()` instead of `.get_frame()`
     frame_3 = reader.read_frame()
-    assert reader.pos == 3
+    assert reader.processing_state.pos == 3
     assert np.array_equal(frame_3, [[[0, 0, 255]]])
 
     # Skip a frame
     skip_frame = reader.get_frame(4)
-    assert reader.pos == 5
+    assert reader.processing_state.pos == 5
     assert np.array_equal(skip_frame, [[[255, 255, 255]]])
 
 
 def test_unusual_order_frame_pos():
     reader = FFMPEG_VideoReader("media/test_video.mp4")
-    assert reader.pos == 1
+    assert reader.processing_state.pos == 1
 
     # Go straight to end
     end_frame = reader.get_frame(4)
-    assert reader.pos == 5
+    assert reader.processing_state.pos == 5
     assert np.array_equal(end_frame, [[[255, 255, 255]]])
 
     # Repeat the previous frame
     second_end_frame = reader.get_frame(4)
-    assert reader.pos == 5
+    assert reader.processing_state.pos == 5
     assert np.array_equal(second_end_frame, [[[255, 255, 255]]])
 
     # Go backwards
     previous_frame = reader.get_frame(3)
-    assert reader.pos == 4
+    assert reader.processing_state.pos == 4
     assert np.array_equal(previous_frame, [[[0, 0, 0]]])
 
     # Go back to start
     start_frame = reader.get_frame(0)
-    assert reader.pos == 1
+    assert reader.processing_state.pos == 1
     assert np.array_equal(start_frame, [[[254, 0, 0]]])
 
 
 def test_large_skip_frame_pos():
     reader = FFMPEG_VideoReader("media/big_buck_bunny_0_30.webm")
-    assert reader.fps == 24
+    assert reader.video_properties.fps == 24
 
     # 10 sec * 24 fps = 240 frames
     reader.get_frame(240 // 24)
-    assert reader.pos == 241
+    assert reader.processing_state.pos == 241
 
     reader.get_frame(719 / 24)
-    assert reader.pos == 720
+    assert reader.processing_state.pos == 720
 
     # Go backwards
     reader.get_frame(120 // 24)
-    assert reader.pos == 121
+    assert reader.processing_state.pos == 121
 
 
 def test_large_small_skip_equal():
     sequential_reader = FFMPEG_VideoReader("media/big_buck_bunny_0_30.webm")
     small_skip_reader = FFMPEG_VideoReader("media/big_buck_bunny_0_30.webm")
     large_skip_reader = FFMPEG_VideoReader("media/big_buck_bunny_0_30.webm")
-    assert small_skip_reader.fps == large_skip_reader.fps == sequential_reader.fps == 24
+    assert (small_skip_reader.video_properties.fps == large_skip_reader.video_properties.fps ==
+            sequential_reader.video_properties.fps == 24)
 
     # Read every frame sequentially
     for t in np.arange(0, 10, 1 / 24):
@@ -650,7 +651,7 @@ def test_large_small_skip_equal():
     large_skip_final_frame = large_skip_reader.get_frame(10)
 
     assert (
-        sequential_reader.pos == small_skip_reader.pos == large_skip_reader.pos == 241
+        sequential_reader.processing_state.pos == small_skip_reader.processing_state.pos == large_skip_reader.processing_state.pos == 241
     )
 
     # All frames have gone forward an equal amount, so should be equal
@@ -665,7 +666,7 @@ def test_seeking_beyond_file_end():
     with pytest.warns(UserWarning, match="Using the last valid frame instead"):
         end_of_file_frame = reader.get_frame(5)
     assert np.array_equal(frame_1, end_of_file_frame)
-    assert reader.pos == 6
+    assert reader.processing_state.pos == 6
 
     # Try again with a jump larger than 100 frames
     # (which triggers different behaviour in `.get_frame()`
@@ -675,7 +676,7 @@ def test_seeking_beyond_file_end():
     with pytest.warns(UserWarning, match="Using the last valid frame instead"):
         end_of_file_frame = reader.get_frame(30)
     assert np.array_equal(frame_1, end_of_file_frame)
-    assert reader.pos == 30 * 24 + 1
+    assert reader.processing_state.pos == 30 * 24 + 1
 
 
 def test_release_of_file_via_close(util):
