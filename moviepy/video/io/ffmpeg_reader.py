@@ -130,14 +130,13 @@ class FFMPEG_VideoReader:
         self.pos = self.get_frame_number(start_time)
         self.lastread = self.read_frame()
 
-    def skip_frames(self, n=1):
-        """Reads and throws away n frames"""
+    def skip_frames(self, num_frames=1):
+        """Reads and throws away num_frames frames"""
         w, h = self.size
-        for i in range(n):
+        for _ in range(num_frames):
             self.proc.stdout.read(self.depth * w * h)
 
-            # self.proc.stdout.flush()
-        self.pos += n
+        self.pos += num_frames
 
     def read_frame(self):
         """
