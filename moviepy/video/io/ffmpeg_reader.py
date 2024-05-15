@@ -1,10 +1,6 @@
 """Implements all the functions to read a video or a picture using ffmpeg."""
 import os
-import re
 import subprocess as sp
-import warnings
-
-import numpy as np
 
 from moviepy.config import FFMPEG_BINARY  # ffmpeg, ffmpeg.exe, etc...
 from moviepy.tools import cross_platform_popen_params
@@ -29,7 +25,7 @@ class FFMPEG_VideoReader:
         resize_algo="bicubic",
         fps_source="fps",
     ):
-        infos = ffmpeg_parse_infos(
+        infos = FileInfo.ffmpeg_parse_infos(
             filename,
             check_duration=check_duration,
             fps_source=fps_source,
@@ -50,24 +46,6 @@ class FFMPEG_VideoReader:
         # Initialize VideoProperties container
         size = infos["video_size"]
         rotation = abs(infos.get("video_rotation", 0))
-        if rotation in [90, 270]:
-            size = [size[1], size[0]]
-
-        if target_resolution:
-            if None in target_resolution:
-                ratio = 1
-                for idx, target in enumerate(target_resolution):
-                    if target:
-                        ratio = target / size[idx]
-                size = (int(size[0] * ratio), int(size[1] * ratio))
-            else:
-                size = target_resolution
-
-        depth = 4 if pixel_format[-1] == "a" else 3
-
-        if bufsize is None:
-            w, h = size
-            bufsize = depth * w * h + 100
 
         self.video_properties = VideoProperties(
             fps=infos["video_fps"],
@@ -76,9 +54,10 @@ class FFMPEG_VideoReader:
             target_resolution=target_resolution,
             resize_algo=resize_algo,
             pixel_format=pixel_format,
-            depth=depth,
+            depth=None,
             bufsize=bufsize
         )
+        self.video_properties.initialize()
 
         # Initialize ProcessingState container
         self.processing_state = ProcessingState()
@@ -87,7 +66,7 @@ class FFMPEG_VideoReader:
 
     def initialize(self, start_time=0):
         """Opens the file, creates the pipe."""
-        self.close(delete_lastread=False)  # if any
+        self.processing_state.close(delete_last_read=False)  # if any
 
         if start_time != 0:
             offset = min(1, start_time)
@@ -130,76 +109,30 @@ class FFMPEG_VideoReader:
             }
         )
         self.processing_state.proc = sp.Popen(cmd, **popen_params)
-
-        # self.pos represents the (0-indexed) index of the frame that is next in line
-        # to be read by self.read_frame().
-        # Eg when self.pos is 1, the 2nd frame will be read next.
-        self.processing_state.pos = self.get_frame_number(start_time)
-        self.processing_state.lastread = self.read_frame()
+        self.processing_state.pos = self.video_properties.get_frame_number(start_time)
+        self.processing_state.last_read = self.processing_state.read_frame(
+            self.video_properties.size,
+            self.video_properties.depth,
+            self.file_info,
+            self.video_properties
+        )
 
     def skip_frames(self, n=1):
         """Reads and throws away n frames"""
-        w, h = self.video_properties.size
-        for i in range(n):
-            self.processing_state.proc.stdout.read(self.video_properties.depth * w * h)
-
-        self.processing_state.pos += n
+        self.processing_state.skip_frames(self.video_properties.size, self.video_properties.depth, n)
 
     def read_frame(self):
         """Reads the next frame from the file."""
-        w, h = self.video_properties.size
-        nbytes = self.video_properties.depth * w * h
-
-        s = self.processing_state.proc.stdout.read(nbytes)
-
-        if len(s) != nbytes:
-            warnings.warn(
-                (
-                    "In file %s, %d bytes wanted but %d bytes read at frame index"
-                    " %d (out of a total %d frames), at time %.02f/%.02f sec."
-                    " Using the last valid frame instead."
-                )
-                % (
-                    self.file_info.filename,
-                    nbytes,
-                    len(s),
-                    self.processing_state.pos,
-                    self.file_info.n_frames,
-                    1.0 * self.processing_state.pos / self.video_properties.fps,
-                    self.file_info.duration,
-                ),
-                UserWarning,
-            )
-            if not hasattr(self.processing_state, "last_read"):
-                raise IOError(
-                    (
-                        "MoviePy error: failed to read the first frame of "
-                        f"video file {self.file_info.filename}. That might mean that the file is "
-                        "corrupted. That may also mean that you are using "
-                        "a deprecated version of FFMPEG. On Ubuntu/Debian "
-                        "for instance the version in the repos is deprecated. "
-                        "Please update to a recent version from the website."
-                    )
-                )
-
-            result = self.processing_state.last_read
-
-        else:
-            if hasattr(np, "frombuffer"):
-                result = np.frombuffer(s, dtype="uint8")
-            else:
-                result = np.fromstring(s, dtype="uint8")
-            result.shape = (h, w, len(s) // (w * h))  # reshape((h, w, len(s)//(w*h)))
-            self.processing_state.last_read = result
-
-        # We have to do this down here because `self.processing_state.pos` is used in the warning above
-        self.processing_state.pos += 1
-
-        return result
+        return self.processing_state.read_frame(
+            self.video_properties.size,
+            self.video_properties.depth,
+            self.file_info,
+            self.video_properties
+        )
 
     def get_frame(self, t):
         """Read a file video frame at time t."""
-        pos = self.get_frame_number(t) + 1
+        pos = self.video_properties.get_frame_number(t) + 1
 
         # Initialize proc if it is not open
         if not self.processing_state.proc:
@@ -211,7 +144,7 @@ class FFMPEG_VideoReader:
             return self.processing_state.last_read
         elif (pos < self.processing_state.pos) or (pos > self.processing_state.pos + 100):
             self.initialize(t)
-            return self.processing_state.lastread
+            return self.processing_state.last_read
         else:
             self.skip_frames(pos - self.processing_state.pos - 1)
             result = self.read_frame()
@@ -219,22 +152,16 @@ class FFMPEG_VideoReader:
 
     def get_frame_number(self, t):
         """Helper method to return the frame number at time ``t``"""
-        return int(self.video_properties.fps * t + 0.00001)
+        return self.video_properties.get_frame_number(t)
 
-    def close(self, delete_lastread=True):
-        """Closes the reader terminating the process, if is still open."""
-        if self.processing_state.proc:
-            if self.processing_state.proc.poll() is None:
-                self.processing_state.proc.terminate()
-                self.processing_state.proc.stdout.close()
-                self.processing_state.proc.stderr.close()
-                self.processing_state.proc.wait()
-            self.processing_state.proc = None
-        if delete_lastread and hasattr(self.processing_state, "last_read"):
-            del self.processing_state.last_read
+    def close(self, delete_last_read=True):
+        """Closes the reader terminating the process, if it is still open."""
+        self.processing_state.close(delete_last_read)
 
     def __del__(self):
         self.close()
+
+
 
 
 def ffmpeg_read_image(filename, with_mask=True, pixel_format=None):
@@ -267,16 +194,17 @@ def ffmpeg_read_image(filename, with_mask=True, pixel_format=None):
     reader = FFMPEG_VideoReader(
         filename, pixel_format=pixel_format, check_duration=False
     )
-    im = reader.last_read
+    im = reader.processing_state.last_read
     del reader
     return im
 
+
 def ffmpeg_parse_infos(
-    filename,
-    check_duration=True,
-    fps_source="fps",
-    decode_file=False,
-    print_infos=False,
+        filename,
+        check_duration=True,
+        fps_source="fps",
+        decode_file=False,
+        print_infos=False,
 ):
     """Get the information of a file using ffmpeg.
 
@@ -327,7 +255,7 @@ def ffmpeg_parse_infos(
 
     popen_params = cross_platform_popen_params(
         {
-            "bufsize": 10**5,
+            "bufsize": 10 ** 5,
             "stdout": sp.PIPE,
             "stderr": sp.PIPE,
             "stdin": sp.DEVNULL,
