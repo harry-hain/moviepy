@@ -9,7 +9,9 @@ import numpy as np
 from moviepy.config import FFMPEG_BINARY  # ffmpeg, ffmpeg.exe, etc...
 from moviepy.tools import cross_platform_popen_params
 from moviepy.video.io.ffmpeg_reader_utils.ffmpeg_infos_parser import FFmpegInfosParser
-from moviepy.video.io.ffmpeg_reader_utils.data_container import FileInfo, VideoProperties, ProcessingState
+from moviepy.video.io.ffmpeg_reader_utils.file_info import FileInfo
+from moviepy.video.io.ffmpeg_reader_utils.video_properties import VideoProperties
+from moviepy.video.io.ffmpeg_reader_utils.processing_state import ProcessingState
 
 
 class FFMPEG_VideoReader:
