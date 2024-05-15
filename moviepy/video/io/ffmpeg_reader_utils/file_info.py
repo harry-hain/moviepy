@@ -3,7 +3,7 @@ import subprocess as sp
 
 from moviepy.config import FFMPEG_BINARY
 from moviepy.tools import cross_platform_popen_params
-from moviepy.video.io.ffmpeg_reader_utils.ffmpeg_infos_parser import FFmpegInfosParser
+from moviepy.video.io.ffmpeg_infos_parsing.ffmpeg_infos_parser import FFmpegInfosParser
 
 
 class FileInfo:
