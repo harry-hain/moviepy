@@ -1,6 +1,9 @@
 import re
 
+
 class FileMetadata:
+    """Handles metadata extraction and storage."""
+
     def __init__(self):
         self.result = {
             "duration": None,
@@ -16,6 +19,7 @@ class FileMetadata:
         }
 
     def parse_duration(self, line, duration_tag_separator):
+        """Parse the duration from the line."""
         try:
             time_raw_string = line.split(duration_tag_separator)[-1]
             match_duration = re.search(
@@ -33,18 +37,23 @@ class FileMetadata:
             )
 
     def parse_metadata_field_value(self, line):
+        """Parse a field-value pair from the metadata line."""
         raw_field, raw_value = line.split(":", 1)
         return raw_field.strip(" "), raw_value.strip(" ")
 
     def video_metadata_type_casting(self, field, value):
+        """Cast video metadata fields to appropriate types."""
         if field == "rotate":
             return field, float(value)
         return field, value
 
     def update_global_data(self, global_data):
+        """Update the global metadata with new data."""
         self.result.update(global_data)
 
+
 def convert_to_seconds(time):
+    """Convert a time string in HH:MM:SS.SS format to seconds."""
     factors = (1, 60, 3600)
 
     if isinstance(time, str):

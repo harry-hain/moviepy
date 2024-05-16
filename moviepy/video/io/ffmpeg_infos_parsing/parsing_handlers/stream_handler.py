@@ -3,12 +3,15 @@ import warnings
 
 
 class StreamHandler:
+    """Handles the parsing of stream information from FFmpeg output."""
+
     def __init__(self, parsing_state, file_metadata, fps_source):
         self.parsing_state = parsing_state
         self.file_metadata = file_metadata
         self.fps_source = fps_source
 
     def process_stream_line(self, line, input_chapters):
+        """Process a line containing stream information."""
         stream_info = self.parsing_state.update_stream(line, input_chapters)
         if stream_info:
             stream_type_lower, input_number, stream_number = stream_info
@@ -24,6 +27,7 @@ class StreamHandler:
                 self.parsing_state._current_stream.update(stream_data)
 
     def parse_data_by_stream_type(self, stream_type, line):
+        """Parse data based on stream type (audio, video, data)."""
         try:
             return {
                 "audio": self.parse_audio_stream_data,
@@ -34,6 +38,7 @@ class StreamHandler:
             raise NotImplementedError(f"{stream_type} stream parsing is not supported by moviepy and will be ignored")
 
     def parse_audio_stream_data(self, line):
+        """Parse audio stream data."""
         global_data, stream_data = ({"audio_found": True}, {})
         try:
             stream_data["fps"] = int(re.search(r" (\d+) Hz", line).group(1))
@@ -47,6 +52,7 @@ class StreamHandler:
         return global_data, stream_data
 
     def parse_video_stream_data(self, line):
+        """Parse video stream data."""
         global_data, stream_data = ({"video_found": True}, {})
 
         try:
@@ -96,9 +102,11 @@ class StreamHandler:
         return global_data, stream_data
 
     def parse_fps(self, line):
+        """Extract frames per second (fps) from the line."""
         return float(re.search(r" (\d+.?\d*) fps", line).group(1))
 
     def parse_tbr(self, line):
+        """Extract time base rate (tbr) from the line."""
         s_tbr = re.search(r" (\d+.?\d*k?) tbr", line).group(1)
         if s_tbr[-1] == "k":
             tbr = float(s_tbr[:-1]) * 1000

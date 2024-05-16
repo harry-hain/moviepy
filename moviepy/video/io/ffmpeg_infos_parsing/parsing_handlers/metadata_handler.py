@@ -1,9 +1,12 @@
 class MetadataHandler:
+    """Handles the parsing of metadata information from FFmpeg output."""
+
     def __init__(self, parsing_state, file_metadata):
         self.parsing_state = parsing_state
         self.file_metadata = file_metadata
 
     def process_metadata_line(self, line):
+        """Process a line containing metadata information."""
         field, value = self.file_metadata.parse_metadata_field_value(line)
 
         if field == "":
@@ -14,6 +17,7 @@ class MetadataHandler:
         self.file_metadata.result["metadata"][field] = value
 
     def process_current_stream_metadata_line(self, line):
+        """Process a line containing current stream metadata."""
         if "metadata" not in self.parsing_state._current_stream:
             self.parsing_state._current_stream["metadata"] = {}
 
@@ -32,6 +36,7 @@ class MetadataHandler:
         self.parsing_state._current_stream["metadata"][field] = value
 
     def process_current_chapter_metadata_line(self, line):
+        """Process a line containing current chapter metadata."""
         if "metadata" not in self.parsing_state._current_chapter:
             self.parsing_state._current_chapter["metadata"] = {}
         field, value = self.file_metadata.parse_metadata_field_value(line)

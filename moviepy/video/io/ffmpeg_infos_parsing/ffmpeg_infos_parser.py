@@ -7,6 +7,8 @@ from moviepy.video.io.ffmpeg_infos_parsing.parsing_handlers.metadata_handler imp
 
 
 class FFmpegInfosParser:
+    """Parser for extracting information from FFmpeg output."""
+
     def __init__(self, infos, filename, fps_source="fps", check_duration=True, decode_file=False):
         self.infos = infos
         self.filename = filename
@@ -20,6 +22,7 @@ class FFmpegInfosParser:
         self.metadata_handler = MetadataHandler(self.parsing_state, self.file_metadata)
 
     def parse(self):
+        """Main parsing method to extract and structure FFmpeg output."""
         input_chapters = []
 
         for line in self.infos.splitlines()[1:]:
@@ -46,35 +49,42 @@ class FFmpegInfosParser:
             elif self.parsing_state._current_chapter:
                 self.metadata_handler.process_current_chapter_metadata_line(line)
 
-        # Finalize last chapter if present
+        # Finalise last chapter if present
         if self.parsing_state._current_chapter:
             if len(input_chapters) < self.parsing_state._current_chapter["input_number"] + 1:
                 input_chapters.append([])
             input_chapters[self.parsing_state._current_chapter["input_number"]].append(
                 self.parsing_state._current_chapter)
 
-        self.finalize_parsing(input_chapters)
+        self.finalise_parsing(input_chapters)
         return self.file_metadata.result
 
     def is_duration_line(self, line):
+        """Check if the line contains duration information."""
         return self.duration_tag_separator == "time=" and self.check_duration and "time=" in line
 
     def is_output_line(self, line):
+        """Check if the line indicates the start of output information."""
         return self.duration_tag_separator == "time=" and not self.parsing_state._inside_output and line[0] != " "
 
     def is_metadata_start_line(self, line):
+        """Check if the line indicates the start of metadata."""
         return not self.parsing_state._inside_file_metadata and line.startswith("  Metadata:")
 
     def is_duration_start_line(self, line):
+        """Check if the line contains start duration information."""
         return line.startswith("  Duration:")
 
     def is_stream_line(self, line):
+        """Check if the line contains stream information."""
         return line.lstrip().startswith("Stream ")
 
     def is_chapter_line(self, line):
+        """Check if the line contains chapter information."""
         return line.startswith("    Chapter")
 
     def process_duration_start_line(self, line):
+        """Process duration start line to extract duration, bitrate, and start time."""
         self.parsing_state._inside_file_metadata = False
         if self.check_duration and self.duration_tag_separator == "Duration: ":
             self.file_metadata.result["duration"] = self.file_metadata.parse_duration(line, self.duration_tag_separator)
@@ -85,8 +95,9 @@ class FFmpegInfosParser:
         start_match = re.search(r"start: (\d+\.?\d+)", line)
         self.file_metadata.result["start"] = float(start_match.group(1)) if start_match else None
 
-    def finalize_parsing(self, input_chapters):
-        input_file = self.parsing_state.finalize_input_file(input_chapters)
+    def finalise_parsing(self, input_chapters):
+        """Finalise parsing by appending input files and updating metadata."""
+        input_file = self.parsing_state.finalise_input_file(input_chapters)
         if input_file:
             self.file_metadata.result["inputs"].append(input_file)
 
