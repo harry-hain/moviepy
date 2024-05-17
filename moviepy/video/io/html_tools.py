@@ -14,7 +14,7 @@ from base64 import b64encode
 
 from moviepy.audio.AudioClip import AudioClip
 from moviepy.tools import extensions_dict
-from moviepy.video.io.ffmpeg_reader import ffmpeg_parse_infos
+from moviepy.video.io.ffmpeg_reader_utils.file_info import FileInfo
 from moviepy.video.VideoClip import ImageClip, VideoClip
 
 
@@ -166,7 +166,7 @@ def html_embed(
             )
 
     if filetype in ["audio", "video"]:
-        duration = ffmpeg_parse_infos(filename, decode_file=True)["duration"]
+        duration = FileInfo.ffmpeg_parse_infos(filename, decode_file=True)["duration"]
         if duration > maxduration:
             raise ValueError(
                 (

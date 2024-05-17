@@ -12,35 +12,35 @@ from moviepy.audio.AudioClip import AudioClip
 from moviepy.config import FFMPEG_BINARY
 from moviepy.video.compositing.CompositeVideoClip import clips_array
 from moviepy.video.io.ffmpeg_reader import (
-    FFMPEG_VideoReader,
-    FFmpegInfosParser,
-    ffmpeg_parse_infos,
+    FFMPEG_VideoReader
 )
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.VideoClip import BitmapClip, ColorClip
+from moviepy.video.io.ffmpeg_reader_utils.file_info import FileInfo
+from moviepy.video.io.ffmpeg_infos_parsing.ffmpeg_infos_parser import FFmpegInfosParser
 
 
 def test_ffmpeg_parse_infos():
-    d = ffmpeg_parse_infos("media/big_buck_bunny_432_433.webm")
+    d = FileInfo.ffmpeg_parse_infos("media/big_buck_bunny_432_433.webm")
     assert d["duration"] == 1.0
     assert d["audio_fps"] == 44100
 
-    d = ffmpeg_parse_infos("media/pigs_in_a_polka.gif")
+    d = FileInfo.ffmpeg_parse_infos("media/pigs_in_a_polka.gif")
     assert d["video_size"] == [314, 273]
     assert d["duration"] == 3.0
     assert not d["audio_found"]
 
-    d = ffmpeg_parse_infos("media/video_with_failing_audio.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/video_with_failing_audio.mp4")
     assert d["audio_found"]
     assert d["audio_fps"] == 44100
     assert d["audio_bitrate"] == 127
 
-    d = ffmpeg_parse_infos("media/crunching.mp3")
+    d = FileInfo.ffmpeg_parse_infos("media/crunching.mp3")
     assert d["audio_found"]
     assert d["audio_fps"] == 48000
     assert d["metadata"]["artist"] == "SoundJay.com Sound Effects"
 
-    d = ffmpeg_parse_infos("media/sintel_with_14_chapters.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/sintel_with_14_chapters.mp4")
     assert d["audio_found"]
     assert d["video_found"]
     assert d["audio_bitrate"]
@@ -48,27 +48,27 @@ def test_ffmpeg_parse_infos():
 
 
 def test_ffmpeg_parse_infos_video_nframes():
-    d = ffmpeg_parse_infos("media/big_buck_bunny_0_30.webm")
+    d = FileInfo.ffmpeg_parse_infos("media/big_buck_bunny_0_30.webm")
     assert d["video_n_frames"] == 720
 
-    d = ffmpeg_parse_infos("media/bitmap.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/bitmap.mp4")
     assert d["video_n_frames"] == 5
 
 
 @pytest.mark.parametrize(
     ("decode_file", "expected_duration"),
     (
-        (False, 30),
-        (True, 30.02),
+            (False, 30),
+            (True, 30.02),
     ),
     ids=(
-        "decode_file=False",
-        "decode_file=True",
+            "decode_file=False",
+            "decode_file=True",
     ),
 )
 def test_ffmpeg_parse_infos_decode_file(decode_file, expected_duration):
     """Test `decode_file` argument of `ffmpeg_parse_infos` function."""
-    d = ffmpeg_parse_infos("media/big_buck_bunny_0_30.webm", decode_file=decode_file)
+    d = FileInfo.ffmpeg_parse_infos("media/big_buck_bunny_0_30.webm", decode_file=decode_file)
     assert d["duration"] == expected_duration
 
     # check metadata is fine
@@ -130,7 +130,7 @@ def test_ffmpeg_parse_infos_multiple_audio_streams(util, mono_wave):
         subprocess.check_call(cmd, stderr=stderr)
 
     # check that `ffmpeg_parse_infos` can parse all the streams data
-    d = ffmpeg_parse_infos(multiple_streams_filepath)
+    d = FileInfo.ffmpeg_parse_infos(multiple_streams_filepath)
 
     # number of inputs and streams
     assert len(d["inputs"]) == 1
@@ -210,7 +210,7 @@ def test_ffmpeg_parse_infos_metadata(util, mono_wave):
     videoclip.write_videofile(filepath, codec="libx264", ffmpeg_params=ffmpeg_params)
 
     # get information about created file
-    d = ffmpeg_parse_infos(filepath)
+    d = FileInfo.ffmpeg_parse_infos(filepath)
 
     def get_value_from_dict_using_lower_key(field, dictionary):
         """Obtains a value from a dictionary using a key, no matter if the key
@@ -236,7 +236,7 @@ def test_ffmpeg_parse_infos_metadata(util, mono_wave):
     for stream_type, stream in streams.items():
         for field, value in metadata[stream_type].items():
             assert (
-                get_value_from_dict_using_lower_key(field, stream["metadata"]) == value
+                    get_value_from_dict_using_lower_key(field, stream["metadata"]) == value
             )
 
     # assert stream languages
@@ -248,7 +248,7 @@ def test_ffmpeg_parse_infos_metadata(util, mono_wave):
 
 def test_ffmpeg_parse_infos_chapters():
     """Check that `ffmpeg_parse_infos` can parse chapters with their metadata."""
-    d = ffmpeg_parse_infos("media/sintel_with_14_chapters.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/sintel_with_14_chapters.mp4")
 
     chapters = d["inputs"][0]["chapters"]
 
@@ -269,7 +269,7 @@ def test_ffmpeg_parse_infos_metadata_with_attached_pic():
     Currently, does not distinguish if the video found is an attached picture,
     this test serves mainly to ensure that #1487 issue does not happen again:
     """
-    d = ffmpeg_parse_infos("media/with-attached-pic.mp3")
+    d = FileInfo.ffmpeg_parse_infos("media/with-attached-pic.mp3")
 
     assert d["audio_bitrate"] == 320
     assert d["audio_found"]
@@ -285,7 +285,7 @@ def test_ffmpeg_parse_infos_metadata_with_attached_pic():
 
 
 def test_ffmpeg_parse_video_rotation():
-    d = ffmpeg_parse_infos("media/rotated-90-degrees.mp4")
+    d = FileInfo.ffmpeg_parse_infos("media/rotated-90-degrees.mp4")
     assert d["video_rotation"] == 90
     assert d["video_size"] == [1920, 1080]
 
@@ -300,7 +300,7 @@ def test_correct_video_rotation(util):
     )
     clip.write_videofile(corrected_rotation_filename)
 
-    d = ffmpeg_parse_infos(corrected_rotation_filename)
+    d = FileInfo.ffmpeg_parse_infos(corrected_rotation_filename)
     assert "video_rotation" not in d
     assert d["video_size"] == [1080, 1920]
 
@@ -565,75 +565,76 @@ def test_sequential_frame_pos():
     The rgb values are not pure due to compression.
     """
     reader = FFMPEG_VideoReader("media/test_video.mp4")
-    assert reader.pos == 1
+    assert reader.processing_state.pos == 1
 
     # Get first frame
     frame_1 = reader.get_frame(0)
-    assert reader.pos == 1
+    assert reader.processing_state.pos == 1
     assert np.array_equal(frame_1, [[[254, 0, 0]]])
 
     # Get a specific sequential frame
     frame_2 = reader.get_frame(1)
-    assert reader.pos == 2
+    assert reader.processing_state.pos == 2
     assert np.array_equal(frame_2, [[[0, 255, 1]]])
 
     # Get next frame. Note `.read_frame()` instead of `.get_frame()`
     frame_3 = reader.read_frame()
-    assert reader.pos == 3
+    assert reader.processing_state.pos == 3
     assert np.array_equal(frame_3, [[[0, 0, 255]]])
 
     # Skip a frame
     skip_frame = reader.get_frame(4)
-    assert reader.pos == 5
+    assert reader.processing_state.pos == 5
     assert np.array_equal(skip_frame, [[[255, 255, 255]]])
 
 
 def test_unusual_order_frame_pos():
     reader = FFMPEG_VideoReader("media/test_video.mp4")
-    assert reader.pos == 1
+    assert reader.processing_state.pos == 1
 
     # Go straight to end
     end_frame = reader.get_frame(4)
-    assert reader.pos == 5
+    assert reader.processing_state.pos == 5
     assert np.array_equal(end_frame, [[[255, 255, 255]]])
 
     # Repeat the previous frame
     second_end_frame = reader.get_frame(4)
-    assert reader.pos == 5
+    assert reader.processing_state.pos == 5
     assert np.array_equal(second_end_frame, [[[255, 255, 255]]])
 
     # Go backwards
     previous_frame = reader.get_frame(3)
-    assert reader.pos == 4
+    assert reader.processing_state.pos == 4
     assert np.array_equal(previous_frame, [[[0, 0, 0]]])
 
     # Go back to start
     start_frame = reader.get_frame(0)
-    assert reader.pos == 1
+    assert reader.processing_state.pos == 1
     assert np.array_equal(start_frame, [[[254, 0, 0]]])
 
 
 def test_large_skip_frame_pos():
     reader = FFMPEG_VideoReader("media/big_buck_bunny_0_30.webm")
-    assert reader.fps == 24
+    assert reader.video_properties.fps == 24
 
     # 10 sec * 24 fps = 240 frames
     reader.get_frame(240 // 24)
-    assert reader.pos == 241
+    assert reader.processing_state.pos == 241
 
     reader.get_frame(719 / 24)
-    assert reader.pos == 720
+    assert reader.processing_state.pos == 720
 
     # Go backwards
     reader.get_frame(120 // 24)
-    assert reader.pos == 121
+    assert reader.processing_state.pos == 121
 
 
 def test_large_small_skip_equal():
     sequential_reader = FFMPEG_VideoReader("media/big_buck_bunny_0_30.webm")
     small_skip_reader = FFMPEG_VideoReader("media/big_buck_bunny_0_30.webm")
     large_skip_reader = FFMPEG_VideoReader("media/big_buck_bunny_0_30.webm")
-    assert small_skip_reader.fps == large_skip_reader.fps == sequential_reader.fps == 24
+    assert (small_skip_reader.video_properties.fps == large_skip_reader.video_properties.fps ==
+            sequential_reader.video_properties.fps == 24)
 
     # Read every frame sequentially
     for t in np.arange(0, 10, 1 / 24):
@@ -650,7 +651,7 @@ def test_large_small_skip_equal():
     large_skip_final_frame = large_skip_reader.get_frame(10)
 
     assert (
-        sequential_reader.pos == small_skip_reader.pos == large_skip_reader.pos == 241
+            sequential_reader.processing_state.pos == small_skip_reader.processing_state.pos == large_skip_reader.processing_state.pos == 241
     )
 
     # All frames have gone forward an equal amount, so should be equal
@@ -665,7 +666,7 @@ def test_seeking_beyond_file_end():
     with pytest.warns(UserWarning, match="Using the last valid frame instead"):
         end_of_file_frame = reader.get_frame(5)
     assert np.array_equal(frame_1, end_of_file_frame)
-    assert reader.pos == 6
+    assert reader.processing_state.pos == 6
 
     # Try again with a jump larger than 100 frames
     # (which triggers different behaviour in `.get_frame()`
@@ -675,7 +676,7 @@ def test_seeking_beyond_file_end():
     with pytest.warns(UserWarning, match="Using the last valid frame instead"):
         end_of_file_frame = reader.get_frame(30)
     assert np.array_equal(frame_1, end_of_file_frame)
-    assert reader.pos == 30 * 24 + 1
+    assert reader.processing_state.pos == 30 * 24 + 1
 
 
 def test_release_of_file_via_close(util):

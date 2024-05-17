@@ -111,12 +111,12 @@ class VideoFileClip(VideoClip):
         )
 
         # Make some of the reader's attributes accessible from the clip
-        self.duration = self.reader.duration
-        self.end = self.reader.duration
+        self.duration = self.reader.file_info.duration
+        self.end = self.reader.file_info.duration
 
-        self.fps = self.reader.fps
-        self.size = self.reader.size
-        self.rotation = self.reader.rotation
+        self.fps = self.reader.video_properties.fps
+        self.size = self.reader.video_properties.size
+        self.rotation = self.reader.video_properties.rotation
 
         self.filename = filename
 
@@ -135,7 +135,7 @@ class VideoFileClip(VideoClip):
             self.make_frame = lambda t: self.reader.get_frame(t)
 
         # Make a reader for the audio, if any.
-        if audio and self.reader.infos["audio_found"]:
+        if audio and self.reader.file_info.infos["audio_found"]:
             self.audio = AudioFileClip(
                 filename,
                 buffersize=audio_buffersize,
