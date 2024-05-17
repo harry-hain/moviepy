@@ -56,9 +56,6 @@ class ImageSequenceClip(VideoClip):
         VideoClip.__init__(self, is_mask=is_mask)
 
         # Parse the data
-
-        fromfiles = True
-
         if isinstance(sequence, list):
             if isinstance(sequence[0], str):
                 if load_images:
@@ -93,7 +90,7 @@ class ImageSequenceClip(VideoClip):
 
         self.fps = fps
         if fps is not None:
-            durations = [1.0 / fps for image in sequence]
+            durations = [1.0 / fps for _ in sequence]
             self.images_starts = [
                 1.0 * i / fps - np.finfo(np.float32).eps for i in range(len(sequence))
             ]

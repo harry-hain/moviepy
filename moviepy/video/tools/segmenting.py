@@ -59,7 +59,6 @@ def find_objects(clip, size_threshold=500, preview=False):
         # crop each letter separately
         sy = slice(sy.start - 1, sy.stop + 1)
         sx = slice(sx.start - 1, sx.stop + 1)
-        letter = image[sy, sx]
         labletter = labelled[sy, sx]
         maskletter = (labletter == (i + 1)) * mask[sy, sx]
         letter = ImageClip(image[sy, sx])
